@@ -9,7 +9,7 @@ const MULT: f32 = 1.0;
 const CUBE_COLOUR: Color = Color::rgb(1.0, 1.0, 1.0);
 const CUBE_STARTING_POSITION: Vec3 = Vec3::new(0.0, 0.5, 0.0);
 const CUBE_SIZE: Vec3 = Vec3::new(1.0, 1.0, 1.0);
-const CUBE_MAX_VEL: f32 = 25.0;
+const CUBE_MAX_VEL: f32 = 5.0;
 const CUBE_MAX_ROT: f32 = 150.0;
 
 const CAMERA_STARTING_POSITION: Vec3 = Vec3::new(-10.0, 5.0, 12.5);
@@ -102,31 +102,30 @@ fn explode(
         for entity in query.iter() {
             commands.entity(entity).despawn_recursive();
         }
-        for _i in 0..25 {
-            // random velocity
+        let size = (CUBE_SIZE.x+CUBE_SIZE.y+CUBE_SIZE.z)/3.0;
+        for _i in 0..40 {
             let mut rng  = rand::thread_rng();
+            
+            // random velocity
             let vel_num: f32 = rng.gen_range(0.0..CUBE_MAX_VEL);
-            let x: f32 = rng.gen_range(-1.0..1.0);
-            let y: f32 = rng.gen_range(-1.0..1.0);
-            let z: f32 = rng.gen_range(-1.0..1.0);
-            let dir: Vec3 = Vec3::new(x, y, z).normalize();
-    
+            let dir: Vec3 = rand_xyz(-1.0, 1.0).normalize();
+            
             // random size
             let size_mult: f32 = rng.gen_range(0.0..1.0);
+            // random offset position
+            let pos: Vec3 = rand_xyz(-size/2.0, size/2.0);
     
             // random rotation
             let rot_num: f32 = rng.gen_range(0.0..CUBE_MAX_ROT);
-            let x: f32 = rng.gen_range(-1.0..1.0);
-            let y: f32 = rng.gen_range(-1.0..1.0);
-            let z: f32 = rng.gen_range(-1.0..1.0);
-            let rot: Vec3 = Vec3::new(x, y, z).normalize();
+            let rot: Vec3 = rand_xyz(-1.0, 1.0).normalize();
+
             // spawn cube
             commands.spawn((
                 PbrBundle {
                     mesh: meshes.add(Mesh::from(shape::Cube{size: 1.0})),
                     material: materials.add(CUBE_COLOUR.into()),
-                    transform: Transform::from_translation(CUBE_STARTING_POSITION)
-                        .with_scale(CUBE_SIZE*size_mult),
+                    transform: Transform::from_translation(CUBE_STARTING_POSITION+pos)
+                        .with_scale(CUBE_SIZE/2.0*size_mult),
                     ..default()
                 },
                 Cube,
@@ -161,4 +160,13 @@ fn move_cube(
             cube_vel.y += GRAVITY*TIME_STEP;
         }
     }
+}
+
+fn rand_xyz(min: f32, max: f32) -> Vec3 {
+    let mut rng  = rand::thread_rng();
+    let x: f32 = rng.gen_range(min..max);
+    let y: f32 = rng.gen_range(min..max);
+    let z: f32 = rng.gen_range(min..max);
+    let vec: Vec3 = Vec3::new(x, y, z);
+    vec
 }
