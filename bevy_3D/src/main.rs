@@ -9,7 +9,7 @@ const MULT: f32 = 1.0;
 const CUBE_COLOUR: Color = Color::rgb(1.0, 1.0, 1.0);
 const CUBE_STARTING_POSITION: Vec3 = Vec3::new(0.0, 0.5, 0.0);
 const CUBE_SIZE: Vec3 = Vec3::new(1.0, 1.0, 1.0);
-const CUBE_MAX_VEL: f32 = 5.0;
+const CUBE_MAX_VEL: f32 = 10.0;
 const CUBE_MAX_ROT: f32 = 150.0;
 
 const CAMERA_STARTING_POSITION: Vec3 = Vec3::new(-10.0, 5.0, 12.5);
@@ -20,6 +20,8 @@ const AMBIENT_COLOUR: &str = "581C87";
 struct StartingBox;
 #[derive(Component)]
 struct Cube;
+#[derive(Component)]
+struct CamPos;
 
 #[derive(Component, Deref, DerefMut)]
 struct Velocity(Vec3);
@@ -64,10 +66,30 @@ fn start(
     ));
 
     // spawn camera
-    commands.spawn(Camera3dBundle {
+//     commands.spawn((
+//         TransformBundle {
+//             global: GlobalTransform::from_translation(Vec3::ZERO),
+//             ..default()
+//         },
+//         CamPos
+//     )).with_children(|parent| {
+//         commands.spawn(Camera3dBundle {
+//             transform: Transform::from_translation(CAMERA_STARTING_POSITION).looking_at(Vec3::ZERO, Vec3::Y),
+//             ..default()
+//         });
+//     });
+    let cam_pos = commands.spawn((
+        TransformBundle {
+            global: GlobalTransform::from_translation(Vec3::ZERO),
+            ..default()
+        },
+        CamPos
+    )).id();
+    let camera = commands.spawn(Camera3dBundle {
         transform: Transform::from_translation(CAMERA_STARTING_POSITION).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
-    });
+    }).id();
+    commands.entity(cam_pos).push_children(&[camera]);
 }
 
 fn spawn_lights(
@@ -108,7 +130,7 @@ fn explode(
             
             // random velocity
             let vel_num: f32 = rng.gen_range(0.0..CUBE_MAX_VEL);
-            let dir: Vec3 = rand_xyz(-1.0, 1.0).normalize();
+            // let dir: Vec3 = rand_xyz(-1.0, 1.0).normalize();
             
             // random size
             let size_mult: f32 = rng.gen_range(0.0..1.0);
@@ -129,7 +151,7 @@ fn explode(
                     ..default()
                 },
                 Cube,
-                Velocity(dir*vel_num),
+                Velocity(pos.normalize()*vel_num),
                 Rotation(rot*rot_num)
             ));
         }
