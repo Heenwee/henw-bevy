@@ -13,6 +13,7 @@ const CUBE_MAX_VEL: f32 = 10.0;
 const CUBE_MAX_ROT: f32 = 150.0;
 
 const CAMERA_STARTING_POSITION: Vec3 = Vec3::new(-10.0, 5.0, 12.5);
+const CAMERA_SPEED: Vec3 = Vec3::new(90.0, 90.0, 0.0);
 
 const AMBIENT_COLOUR: &str = "581C87";
 
@@ -44,7 +45,8 @@ fn main() {
                 .with_system(apply_velocity)
                 .with_system(apply_rotation)
                 .with_system(move_cube.before(apply_velocity))
-                .with_system(explode),
+                .with_system(explode)
+                .with_system(rotate_camera),
         )
         .run()
 }
@@ -66,18 +68,6 @@ fn start(
     ));
 
     // spawn camera
-//     commands.spawn((
-//         TransformBundle {
-//             global: GlobalTransform::from_translation(Vec3::ZERO),
-//             ..default()
-//         },
-//         CamPos
-//     )).with_children(|parent| {
-//         commands.spawn(Camera3dBundle {
-//             transform: Transform::from_translation(CAMERA_STARTING_POSITION).looking_at(Vec3::ZERO, Vec3::Y),
-//             ..default()
-//         });
-//     });
     let cam_pos = commands.spawn((
         TransformBundle {
             global: GlobalTransform::from_translation(Vec3::ZERO),
@@ -155,6 +145,20 @@ fn explode(
                 Rotation(rot*rot_num)
             ));
         }
+    }
+}
+
+fn rotate_camera(
+    keys: Res<Input<KeyCode>>,
+    mut query: Query<&mut Transform, With<CamPos>>,
+    time: Res<Time>
+) {
+    let mut cam_pos = query.single_mut();
+
+    if keys.pressed(KeyCode::A) {
+        cam_pos.rotate_y(-CAMERA_SPEED.y*time.delta_seconds()*TIME_STEP)
+    } if keys.pressed(KeyCode::D) {
+        cam_pos.rotate_y(CAMERA_SPEED.y*time.delta_seconds()*TIME_STEP)
     }
 }
 
